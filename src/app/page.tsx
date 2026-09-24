@@ -1,19 +1,21 @@
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import BuscadorNegocios from '@/components/BuscadorNegocios';
+import VitrinaEmprendedores from '@/components/VitrinaEmprendedores';
 
 export default async function HomePage() {
-  // Operación de lectura: Traer los datos clave para el buscador en tiempo real
+  // CORRECCIÓN: Añadidas las nuevas columnas de contacto al select de Supabase
   const { data: negocios, error } = await supabase
     .from('negocios')
-    .select('id, nombre, categoria, descripcion, direccion, calificacion');
+    .select('id, nombre, categoria, descripcion, direccion, calificacion, es_promocionado, horario, nombre_propietario, telefono_contacto, redes_sociales');
 
   const listaNegocios = error || !negocios ? [] : negocios;
 
-  // Extraer las categorías únicas disponibles en el sistema
-  const categoriasUnicas = Array.from(
-    new Set(listaNegocios.map((n) => n.categoria))
-  );
+  // Filtrar de forma segura los comercios postulados para el espacio gratuito
+  const emprendedoresPromocionados = listaNegocios.filter(n => n.es_promocionado === true);
+  
+  // Extraer los rubros únicos registrados
+  const categoriasUnicas = Array.from(new Set(listaNegocios.map((n) => n.categoria)));
 
   return (
     <main className="max-w-4xl mx-auto p-6 mt-10">
@@ -35,6 +37,9 @@ export default async function HomePage() {
           </Link>
         </div>
       </section>
+
+      {/* Vitrina comercial comunitaria fija (Ya no arrojará errores de tipado) */}
+      <VitrinaEmprendedores lista={emprendedoresPromocionados} />
 
       {/* Inyección del Buscador Dinámico de Cliente */}
       <BuscadorNegocios 
