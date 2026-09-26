@@ -41,7 +41,7 @@ export default function ReportarPage() {
     setError(null);
 
     if (!nombre.trim() || !descripcion.trim()) {
-      setError('Por favor, completa todos los campos requeridos.');
+      setError('Por favor, completa todos los campos requeridos (Nombre y Descripción).');
       setLoading(false);
       return;
     }
@@ -50,7 +50,7 @@ export default function ReportarPage() {
 
     if (archivoFoto) {
       const nombreArchivo = `${Date.now()}_${archivoFoto.name.replace(/\s+/g, '_')}`;
-      
+
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('pruebas_reseñas')
         .upload(nombreArchivo, archivoFoto);
@@ -70,6 +70,7 @@ export default function ReportarPage() {
 
     const slug = generarSlug(nombre);
 
+    // Guardado en la base de datos con detección de errores detallada
     const { error: insertError } = await supabase
       .from('negocios')
       .insert([
@@ -79,7 +80,7 @@ export default function ReportarPage() {
           slug,
           descripcion: descripcion.trim(),
           calificacion: Number(calificacion),
-          direccion: direccion.trim(),
+          direccion: direccion.trim() || null,
           imagen_prueba_url: urlPublicaImagen,
           es_promocionado: esPromocionado,
           horario: esPromocionado ? horario.trim() : null,
@@ -90,7 +91,7 @@ export default function ReportarPage() {
       ]);
 
     if (insertError) {
-      setError('Ocurrió un error al guardar la información. Inténtalo de nuevo.');
+      setError(`Fallo en Supabase: ${insertError.message} -> ${insertError.details || 'Revisa restricciones NOT NULL'}`);
       setLoading(false);
     } else {
       router.push(`/categorias/${categoria}`);
@@ -113,13 +114,13 @@ export default function ReportarPage() {
       </div>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-200">
+        <div className="mb-4 p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-200 font-mono">
           {error}
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        
+
         {/* Casilla de verificación: Dueño vs Cliente */}
         <div className="bg-indigo-50/50 border border-indigo-100 rounded-lg p-4 space-y-2">
           <label className="flex items-center gap-2 font-bold text-gray-900 cursor-pointer">
@@ -155,7 +156,7 @@ export default function ReportarPage() {
         {esPromocionado && (
           <div className="space-y-4 p-4 border border-dashed border-gray-200 rounded-xl bg-gray-50/50">
             <p className="text-xs font-bold text-indigo-900 uppercase tracking-wider">📋 Ficha del Propietario:</p>
-            
+
             <div>
               <label className="block text-xs font-semibold text-gray-700 mb-1">Tu nombre completo *</label>
               <input
@@ -213,108 +214,46 @@ export default function ReportarPage() {
             type="text"
             value={direccion}
             onChange={(e) => setDireccion(e.target.value)}
-            placeholder="Ej: Calle Principal #12, Frente al Parque"
-            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 text-sm"
+            placeholder="Ej: Av. Principal #123, Frente al parque"
+            className="w-full px-3 py-2 border rounded-lg text-sm text-gray-900 focus:ring-2 focus:ring-indigo-500"
           />
         </div>
 
-        {/* Categoria */}
+        {/* Categoría */}
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1">
-            Sector o Rubro *
-          </label>
+          <label className="block text-sm font-semibold text-gray-700 mb-1">Categoría del Rubro *</label>
           <select
             value={categoria}
             onChange={(e) => setCategoria(e.target.value)}
-            className="w-full px-3 py-2 border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 text-sm"
+            className="w-full px-3 py-2 border rounded-lg text-sm text-gray-900 focus:ring-2 focus:ring-indigo-500"
           >
-            <option value="mecanicos">🔧 Talleres Mecánicos</option>
-            <option value="restaurantes">🍔 Gastronomía y Cafés</option>
-            <option value="salud">⚕️ Salud y Clínicas</option>
+            <option value="mecanicos">🔧 Mecánicos & Talleres</option>
+            <option value="restaurantes">🍞 Gastronomía & Restaurantes</option>
+            <option value="tiendas">🛍️ Tiendas & Almacenes</option>
+            <option value="salud">⚕️ Salud & Clínicas</option>
           </select>
         </div>
 
-        {/* Calificación (Oculta si es anuncio) */}
-        {!esPromocionado && (
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
-              Tu calificación (1 al 5)
-            </label>
-            <select
-              value={calificacion}
-              onChange={(e) => setCalificacion(Number(e.target.value))}
-              className="w-full px-3 py-2 border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 text-sm"
-            >
-              <option value="1">⭐ Crítica (Mala experiencia, cobros indebidos)</option>
-              <option value="2">⭐⭐ Insatisfecho</option>
-              <option value="3">⭐⭐⭐ Regular</option>
-              <option value="4">⭐⭐⭐⭐ Bueno</option>
-              <option value="5">⭐⭐⭐⭐⭐ Excelente servicio</option>
-            </select>
-          </div>
-        )}
-
-        {/* Archivo adjunto (Oculto si es anuncio) */}
-        {!esPromocionado && (
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
-              Adjuntar comprobante o fotografía (Opcional)
-            </label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => {
-                if (e.target.files && e.target.files) {
-                  setArchivoFoto(e.target.files[0]);
-                }
-              }}
-              className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer"
-            />
-          </div>
-        )}
-
-        {/* Descripción Dinámica */}
+        {/* Descripción */}
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1">
-            {esPromocionado ? 'Describe los productos o servicios que ofreces *' : 'Cuéntanos tu experiencia de consumo *'}
-          </label>
+          <label className="block text-sm font-semibold text-gray-700 mb-1">Descripción del Servicio o Reseña *</label>
           <textarea
             required
             rows={4}
             value={descripcion}
             onChange={(e) => setDescripcion(e.target.value)}
-            placeholder={esPromocionado ? "Ej: Ofrecemos pan dulce y pan frances calientito todos los días en horarios de..." : "Explica detalladamente tu experiencia con este negocio..."}
-            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 text-sm"
-          />
+            placeholder="Describe qué ofrece el negocio, especialidades o tu reseña sobre el lugar..."
+            className="w-full px-3 py-2 border rounded-lg text-sm text-gray-900 focus:ring-2 focus:ring-indigo-500"
+          ></textarea>
         </div>
 
-        {/* Aviso de Responsabilidad Legal */}
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-xs text-gray-600 space-y-2">
-          <p className="font-semibold text-gray-700">Aviso de Responsabilidad:</p>
-          <p className="leading-relaxed">
-            El usuario declara que toda la información provista, sea una reseña ciudadana o un anuncio comercial propio, es fidedigna y veraz. Queda prohibida la competencia desleal o la suplantación de identidad.
-          </p>
-          
-          <label className="flex items-start gap-2 pt-2 border-t border-gray-200 font-medium text-gray-800 cursor-pointer mt-1">
-            <input
-              type="checkbox"
-              checked={aceptaTerminos}
-              onChange={(e) => setAceptaTerminos(e.target.checked)}
-              className="mt-0.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
-            />
-            <span>
-              Acepto los términos comunitarios y certifico que los datos ingresados son reales. *
-            </span>
-          </label>
-        </div>
-
-        {/* Botón de envío final */}
+        {/* Botón de Envío */}
         <button
           type="submit"
-          disabled={loading || !aceptaTerminos}
-          className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-4 rounded-lg transition-colors text-sm disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
+          disabled={loading}
+          className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-4 rounded-xl text-sm transition-all disabled:bg-gray-400"
         >
-          {loading ? 'Procesando registro...' : esPromocionado ? 'Publicar Mi Anuncio Gratis 📢' : 'Publicar Reseña Ciudadana 📢'}
+          {loading ? 'Guardando información...' : '🚀 Publicar Ahora'}
         </button>
 
       </form>
