@@ -2,6 +2,7 @@ import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import BuscadorNegocios from '@/components/BuscadorNegocios';
 import VitrinaEmprendedores from '@/components/VitrinaEmprendedores';
+import OfflinePrefetch from '@/components/OfflinePrefetch';
 
 export default async function HomePage() {
   // Añadidas las nuevas columnas de contacto al select de Supabase
@@ -17,8 +18,17 @@ export default async function HomePage() {
   // Extraer los rubros únicos registrados
   const categoriasUnicas = Array.from(new Set(listaNegocios.map((n) => n.categoria)));
 
+  // Páginas que se guardan en el celular para poder abrirlas sin conexión
+  const paginasParaOffline = [
+    '/reportar',
+    ...categoriasUnicas.map((categoria) => `/categorias/${categoria}`),
+    ...listaNegocios.slice(0, 30).map((negocio) => `/negocios/${negocio.id}`),
+  ];
+
   return (
     <main className="max-w-4xl mx-auto p-6 mt-10">
+      <OfflinePrefetch urls={paginasParaOffline} />
+
       {/* Encabezado Principal Amigable Adaptado a Modo Oscuro */}
       <section className="text-center mb-12 py-12 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-zinc-900 dark:to-zinc-800 rounded-2xl border border-blue-100 dark:border-zinc-800 transition-colors">
         <h1 className="text-4xl font-extrabold text-gray-900 dark:text-gray-100 mb-3 tracking-tight">

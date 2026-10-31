@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { InstallAppButton } from './InstallPrompt';
 
 export default function Footer() {
   const anioActual = new Date().getFullYear();
@@ -26,6 +27,7 @@ export default function Footer() {
           <Link href="/contacto" className="hover:text-indigo-600 transition-colors">
             Verificar mi Negocio
           </Link>
+          <InstallAppButton />
           <span className="text-gray-300 hidden sm:inline">|</span>
           <span className="text-gray-400 italic">
             Las reseñas expresadas son responsabilidad exclusiva de sus autores.
