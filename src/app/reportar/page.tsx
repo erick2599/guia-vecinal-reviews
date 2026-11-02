@@ -15,7 +15,8 @@ export default function ReportarPage() {
   const [direccion, setDireccion] = useState('');
   const [categoria, setCategoria] = useState('mecanicos');
   const [descripcion, setDescripcion] = useState('');
-  const [calificacion, setCalificacion] = useState(5);
+  const [calificacion, setCalificacion] = useState(0);
+  const [estrellasHover, setEstrellasHover] = useState(0);
   const [aceptaTerminos, setAceptaTerminos] = useState(false);
   const [archivoFoto, setArchivoFoto] = useState<File | null>(null);
 
@@ -32,7 +33,7 @@ export default function ReportarPage() {
       .trim()
       .replace(/[^\w\s-]/g, '')
       .replace(/[\s_-]+/g, '-')
-      .replace(/^-+|-+\$/g, '');
+      .replace(/^-+|-+$/g, '');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -42,6 +43,12 @@ export default function ReportarPage() {
 
     if (!nombre.trim() || !descripcion.trim()) {
       setError('Por favor, completa todos los campos requeridos (Nombre y Descripción).');
+      setLoading(false);
+      return;
+    }
+
+    if (calificacion < 1) {
+      setError('Por favor, selecciona una calificación de 1 a 5 estrellas.');
       setLoading(false);
       return;
     }
@@ -231,7 +238,51 @@ export default function ReportarPage() {
             <option value="restaurantes">🍞 Gastronomía & Restaurantes</option>
             <option value="tiendas">🛍️ Tiendas & Almacenes</option>
             <option value="salud">⚕️ Salud & Clínicas</option>
+            <option value="gasolineras">⛽ Gasolineras & Estaciones de Servicio</option>
           </select>
+        </div>
+
+        {/* Calificación con estrellas */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-1">
+            Calificación del establecimiento *
+          </label>
+          <div
+            role="radiogroup"
+            aria-label="Calificación en estrellas"
+            className="flex flex-wrap items-center gap-1"
+          >
+            {[1, 2, 3, 4, 5].map((valor) => {
+              const activa = valor <= (estrellasHover || calificacion);
+              return (
+                <button
+                  key={valor}
+                  type="button"
+                  role="radio"
+                  aria-checked={calificacion === valor}
+                  aria-label={`${valor} ${valor === 1 ? 'estrella' : 'estrellas'}`}
+                  onClick={() => setCalificacion(valor)}
+                  onMouseEnter={() => setEstrellasHover(valor)}
+                  onMouseLeave={() => setEstrellasHover(0)}
+                  onFocus={() => setEstrellasHover(valor)}
+                  onBlur={() => setEstrellasHover(0)}
+                  className={`text-4xl leading-none transition-transform hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded ${
+                    activa ? 'text-amber-400' : 'text-gray-300'
+                  }`}
+                >
+                  ★
+                </button>
+              );
+            })}
+            <span className="ml-2 text-sm font-semibold text-gray-600">
+              {calificacion > 0
+                ? `${calificacion} de 5 estrellas`
+                : 'Toca las estrellas para calificar'}
+            </span>
+          </div>
+          <p className="text-xs text-gray-500 mt-1">
+            Selecciona de 1 a 5 estrellas según tu experiencia.
+          </p>
         </div>
 
         {/* Descripción */}

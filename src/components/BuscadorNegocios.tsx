@@ -25,7 +25,9 @@ export default function BuscadorNegocios({ negociosIniciales, categoriasDisponib
   const formatoCategorias: Record<string, { nombre: string; icono: string }> = {
     mecanicos: { nombre: 'Talleres Mecánicos', icono: '🔧' },
     restaurantes: { nombre: 'Gastronomía y Cafés', icono: '🍔' },
+    tiendas: { nombre: 'Tiendas y Almacenes', icono: '🛍️' },
     salud: { nombre: 'Salud y Clínicas', icono: '⚕️' },
+    gasolineras: { nombre: 'Gasolineras y Estaciones', icono: '⛽' },
   };
 
   // Filtrado en tiempo real según lo que escribe el usuario
