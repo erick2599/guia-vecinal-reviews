@@ -6,6 +6,16 @@ const nextConfig: NextConfig = {
     // automáticamente cuando vuelve el internet.
     useOffline: true,
   },
+  images: {
+    // Fotos de reseñas guardadas en Supabase Storage.
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "**.supabase.co",
+        pathname: "/storage/v1/object/public/**",
+      },
+    ],
+  },
   async headers() {
     return [
       {

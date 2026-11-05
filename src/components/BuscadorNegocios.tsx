@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { infoCategoria } from '@/lib/categorias';
 
 // Definición de la estructura de datos que recibe el componente
 interface NegocioBasico {
@@ -20,15 +21,6 @@ interface BuscadorProps {
 
 export default function BuscadorNegocios({ negociosIniciales, categoriasDisponibles }: BuscadorProps) {
   const [busqueda, setBusqueda] = useState('');
-
-  // Diccionario visual para íconos y nombres limpios de categorías
-  const formatoCategorias: Record<string, { nombre: string; icono: string }> = {
-    mecanicos: { nombre: 'Talleres Mecánicos', icono: '🔧' },
-    restaurantes: { nombre: 'Gastronomía y Cafés', icono: '🍔' },
-    tiendas: { nombre: 'Tiendas y Almacenes', icono: '🛍️' },
-    salud: { nombre: 'Salud y Clínicas', icono: '⚕️' },
-    gasolineras: { nombre: 'Gasolineras y Estaciones', icono: '⛽' },
-  };
 
   // Filtrado en tiempo real según lo que escribe el usuario
   const negociosFiltrados = negociosIniciales.filter((n) => {
@@ -95,7 +87,7 @@ export default function BuscadorNegocios({ negociosIniciales, categoriasDisponib
                       {n.nombre}
                     </h3>
                     <span className="text-xs font-semibold bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full capitalize">
-                      {formatoCategorias[n.categoria]?.nombre || n.categoria}
+                      {infoCategoria(n.categoria).nombre}
                     </span>
                   </div>
                   <div className="text-amber-500 text-sm mb-1.5">
@@ -127,7 +119,7 @@ export default function BuscadorNegocios({ negociosIniciales, categoriasDisponib
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
             {categoriasDisponibles.map((slug) => {
-              const info = formatoCategorias[slug] || { nombre: slug, icono: '🏢' };
+              const info = infoCategoria(slug);
               return (
                 <Link
                   key={slug}

@@ -21,6 +21,9 @@ export default function Footer() {
           <Link href="/" className="hover:text-indigo-600 transition-colors">
             Inicio
           </Link>
+          <Link href="/resenas" className="hover:text-indigo-600 transition-colors">
+            Reseñas publicadas
+          </Link>
           <Link href="/login" className="hover:text-indigo-600 transition-colors">
             Portal Comercios
           </Link>

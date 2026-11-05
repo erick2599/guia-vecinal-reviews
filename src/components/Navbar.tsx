@@ -13,20 +13,27 @@ export default function Navbar() {
         </Link>
 
         {/* Enlaces de Navegación */}
-        <div className="flex items-center gap-4 sm:gap-6">
+        <div className="flex items-center gap-3 sm:gap-6">
+          <Link
+            href="/resenas"
+            className="text-sm font-semibold text-gray-600 hover:text-indigo-600 transition-colors"
+          >
+            Reseñas
+          </Link>
+
           <Link 
             href="/login" 
-            className="text-sm font-semibold text-gray-600 hover:text-indigo-600 transition-colors flex items-center gap-1.5"
+            className="hidden sm:flex text-sm font-semibold text-gray-600 hover:text-indigo-600 transition-colors items-center gap-1.5"
           >
             <span role="img" aria-hidden="true">💼</span>
-            <span className="hidden sm:inline">Portal</span> Comercios
+            <span>Portal</span> Comercios
           </Link>
 
           <Link 
             href="/reportar" 
-            className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-4 py-2 rounded-lg text-sm shadow-sm transition-all transform hover:-translate-y-0.5"
+            className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm shadow-sm transition-all transform hover:-translate-y-0.5"
           >
-            ⭐ Escribir Reseña
+            ⭐ <span className="hidden sm:inline">Escribir </span>Reseña
           </Link>
         </div>
       </div>

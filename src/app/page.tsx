@@ -4,6 +4,10 @@ import BuscadorNegocios from '@/components/BuscadorNegocios';
 import VitrinaEmprendedores from '@/components/VitrinaEmprendedores';
 import OfflinePrefetch from '@/components/OfflinePrefetch';
 
+// La portada muestra datos de Supabase; debe refrescarse para reflejar las
+// reseñas nuevas sin esperar a un nuevo despliegue.
+export const dynamic = 'force-dynamic';
+
 export default async function HomePage() {
   // Añadidas las nuevas columnas de contacto al select de Supabase
   const { data: negocios, error } = await supabase
@@ -20,6 +24,7 @@ export default async function HomePage() {
 
   // Páginas que se guardan en el celular para poder abrirlas sin conexión
   const paginasParaOffline = [
+    '/resenas',
     '/reportar',
     ...categoriasUnicas.map((categoria) => `/categorias/${categoria}`),
     ...listaNegocios.slice(0, 30).map((negocio) => `/negocios/${negocio.id}`),
@@ -44,6 +49,12 @@ export default async function HomePage() {
             className="inline-block bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 py-2.5 rounded-lg shadow-sm text-sm transition-all transform hover:-translate-y-0.5"
           >
             ⭐ Escribir una Reseña
+          </Link>
+          <Link
+            href="/resenas"
+            className="inline-block bg-white hover:bg-indigo-50 text-indigo-700 border border-indigo-200 font-semibold px-6 py-2.5 rounded-lg shadow-sm text-sm transition-all transform hover:-translate-y-0.5 dark:bg-zinc-900 dark:text-indigo-300 dark:border-zinc-700 dark:hover:bg-zinc-800"
+          >
+            📋 Ver reseñas publicadas
           </Link>
         </div>
       </section>

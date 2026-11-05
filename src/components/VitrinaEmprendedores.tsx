@@ -1,12 +1,5 @@
 import Link from 'next/link';
-
-const ETIQUETAS_CATEGORIA: Record<string, string> = {
-  restaurantes: '🍞 Gastronomía',
-  gasolineras: '⛽ Gasolineras',
-  tiendas: '🛍️ Tiendas',
-  mecanicos: '🔧 Mecánicos',
-  salud: '⚕️ Salud',
-};
+import { infoCategoria } from '@/lib/categorias';
 
 interface Emprendedor {
   id: number;
@@ -57,7 +50,7 @@ export default function VitrinaEmprendedores({ lista }: { lista: Emprendedor[] }
                 {/* Encabezado: Propietario y Negocio */}
                 <div className="mb-3">
                   <span className="text-[10px] uppercase font-bold tracking-wider bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 px-2 py-1 rounded-md">
-                    {ETIQUETAS_CATEGORIA[e.categoria] ?? e.categoria}
+                    {infoCategoria(e.categoria).icono} {infoCategoria(e.categoria).corto}
                   </span>
                   <h3 className="font-extrabold text-gray-900 dark:text-gray-100 text-lg mt-2">
                     {e.nombre}

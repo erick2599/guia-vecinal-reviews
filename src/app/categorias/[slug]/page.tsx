@@ -1,4 +1,5 @@
 import { supabase, Negocio } from '@/lib/supabase';
+import { infoCategoria } from '@/lib/categorias';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
@@ -21,8 +22,9 @@ export default async function CategoriaPage({ params }: Props) {
 
   return (
     <main className="max-w-4xl mx-auto p-6 mt-10">
-      <h1 className="text-3xl font-bold mb-6 capitalize text-gray-800">
-        Categoría: {slug}
+      <h1 className="text-3xl font-bold mb-6 text-gray-800 dark:text-gray-100">
+        <span aria-hidden="true">{infoCategoria(slug).icono}</span>{' '}
+        {infoCategoria(slug).nombre}
       </h1>
 
       {negocios.length === 0 ? (

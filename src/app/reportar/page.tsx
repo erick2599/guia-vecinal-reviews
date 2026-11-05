@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import { CATEGORIAS } from '@/lib/categorias';
 import Link from 'next/link';
 
 export default function ReportarPage() {
@@ -19,6 +20,8 @@ export default function ReportarPage() {
   const [estrellasHover, setEstrellasHover] = useState(0);
   const [aceptaTerminos, setAceptaTerminos] = useState(false);
   const [archivoFoto, setArchivoFoto] = useState<File | null>(null);
+  const [fotoPreview, setFotoPreview] = useState<string | null>(null);
+  const inputFotoRef = useRef<HTMLInputElement>(null);
 
   // Estados para Promoción de Negocios
   const [esPromocionado, setEsPromocionado] = useState(false);
@@ -34,6 +37,44 @@ export default function ReportarPage() {
       .replace(/[^\w\s-]/g, '')
       .replace(/[\s_-]+/g, '-')
       .replace(/^-+|-+$/g, '');
+  };
+
+  useEffect(() => {
+    return () => {
+      if (fotoPreview) URL.revokeObjectURL(fotoPreview);
+    };
+  }, [fotoPreview]);
+
+  const seleccionarFoto = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const archivo = e.target.files?.[0] ?? null;
+    setError(null);
+
+    if (!archivo) {
+      setArchivoFoto(null);
+      setFotoPreview(null);
+      return;
+    }
+
+    if (!archivo.type.startsWith('image/')) {
+      setError('La fotografía debe ser una imagen (JPG, PNG o WebP).');
+      e.target.value = '';
+      return;
+    }
+
+    if (archivo.size > 5 * 1024 * 1024) {
+      setError('La fotografía no puede pesar más de 5 MB.');
+      e.target.value = '';
+      return;
+    }
+
+    setArchivoFoto(archivo);
+    setFotoPreview(URL.createObjectURL(archivo));
+  };
+
+  const quitarFoto = () => {
+    setArchivoFoto(null);
+    setFotoPreview(null);
+    if (inputFotoRef.current) inputFotoRef.current.value = '';
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -53,14 +94,22 @@ export default function ReportarPage() {
       return;
     }
 
-    let urlPublicaImagen = null;
+    let urlPublicaImagen: string | null = null;
+    let nombreArchivoSubido: string | null = null;
 
     if (archivoFoto) {
-      const nombreArchivo = `${Date.now()}_${archivoFoto.name.replace(/\s+/g, '_')}`;
+      const extension = archivoFoto.name.split('.').pop()?.toLowerCase() || 'jpg';
+      const nombreArchivo = `${Date.now()}-${Math.random()
+        .toString(36)
+        .slice(2, 8)}.${extension}`;
+      nombreArchivoSubido = nombreArchivo;
 
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('pruebas_reseñas')
-        .upload(nombreArchivo, archivoFoto);
+      const { error: uploadError } = await supabase.storage
+        .from('fotos-resenas')
+        .upload(nombreArchivo, archivoFoto, {
+          contentType: archivoFoto.type,
+          cacheControl: '3600',
+        });
 
       if (uploadError) {
         setError('Error al subir la imagen. Por favor, intenta de nuevo.');
@@ -69,7 +118,7 @@ export default function ReportarPage() {
       }
 
       const { data: publicUrlData } = supabase.storage
-        .from('pruebas_reseñas')
+        .from('fotos-resenas')
         .getPublicUrl(nombreArchivo);
 
       urlPublicaImagen = publicUrlData.publicUrl;
@@ -98,6 +147,12 @@ export default function ReportarPage() {
       ]);
 
     if (insertError) {
+      // Si el negocio no se pudo guardar, no dejamos la foto huérfana.
+      if (nombreArchivoSubido) {
+        await supabase.storage
+          .from('fotos-resenas')
+          .remove([nombreArchivoSubido]);
+      }
       setError(`Fallo en Supabase: ${insertError.message} -> ${insertError.details || 'Revisa restricciones NOT NULL'}`);
       setLoading(false);
     } else {
@@ -234,11 +289,11 @@ export default function ReportarPage() {
             onChange={(e) => setCategoria(e.target.value)}
             className="w-full px-3 py-2 border rounded-lg text-sm text-gray-900 focus:ring-2 focus:ring-indigo-500"
           >
-            <option value="mecanicos">🔧 Mecánicos & Talleres</option>
-            <option value="restaurantes">🍞 Gastronomía & Restaurantes</option>
-            <option value="tiendas">🛍️ Tiendas & Almacenes</option>
-            <option value="salud">⚕️ Salud & Clínicas</option>
-            <option value="gasolineras">⛽ Gasolineras & Estaciones de Servicio</option>
+            {Object.entries(CATEGORIAS).map(([slug, info]) => (
+              <option key={slug} value={slug}>
+                {info.icono} {info.nombre}
+              </option>
+            ))}
           </select>
         </div>
 
@@ -296,6 +351,46 @@ export default function ReportarPage() {
             placeholder="Describe qué ofrece el negocio, especialidades o tu reseña sobre el lugar..."
             className="w-full px-3 py-2 border rounded-lg text-sm text-gray-900 focus:ring-2 focus:ring-indigo-500"
           ></textarea>
+        </div>
+
+        {/* Fotografía opcional */}
+        <div>
+          <label
+            htmlFor="foto"
+            className="block text-sm font-semibold text-gray-700 mb-1"
+          >
+            Fotografía del lugar{' '}
+            <span className="font-normal text-gray-500">(opcional)</span>
+          </label>
+          <input
+            ref={inputFotoRef}
+            id="foto"
+            type="file"
+            accept="image/*"
+            onChange={seleccionarFoto}
+            className="block w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-indigo-50 file:text-indigo-700 file:font-semibold hover:file:bg-indigo-100 file:cursor-pointer border border-gray-200 rounded-lg"
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            JPG, PNG o WebP · máximo 5 MB. Se mostrará junto a tu reseña.
+          </p>
+
+          {fotoPreview && (
+            <div className="mt-3 relative inline-block">
+              {/* Vista previa local del archivo elegido */}
+              <img
+                src={fotoPreview}
+                alt="Vista previa de la fotografía"
+                className="max-h-56 rounded-xl border border-gray-200 object-contain bg-gray-50"
+              />
+              <button
+                type="button"
+                onClick={quitarFoto}
+                className="absolute top-2 right-2 rounded-full bg-black/60 text-white text-xs font-semibold px-2.5 py-1 hover:bg-black/80"
+              >
+                Quitar
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Botón de Envío */}
