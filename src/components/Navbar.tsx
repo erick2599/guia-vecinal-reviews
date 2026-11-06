@@ -33,7 +33,7 @@ export default function Navbar() {
             href="/reportar" 
             className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm shadow-sm transition-all transform hover:-translate-y-0.5"
           >
-            ⭐ <span className="hidden sm:inline">Escribir </span>Escribe una Reseña
+            ⭐ <span className="hidden sm:inline">Escribir </span>Escribir una Reseña
           </Link>
         </div>
       </div>
