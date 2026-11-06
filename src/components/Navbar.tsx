@@ -18,7 +18,7 @@ export default function Navbar() {
             href="/resenas"
             className="text-sm font-semibold text-gray-600 hover:text-indigo-600 transition-colors"
           >
-            Reseñas
+           Escribe una Reseña
           </Link>
 
           <Link 
