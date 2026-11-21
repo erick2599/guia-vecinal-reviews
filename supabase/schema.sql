@@ -62,6 +62,13 @@ create policy "Envio de solicitudes"
   on public.solicitudes_verificacion for insert to anon, authenticated
   with check (true);
 
+-- Permisos de la API para los roles públicos (las policies RLS por sí solas no bastan)
+grant usage on schema public to anon, authenticated;
+grant select, insert, update on public.negocios to anon, authenticated;
+grant insert on public.solicitudes_verificacion to anon, authenticated;
+grant usage, select on sequence public.negocios_id_seq to anon, authenticated;
+grant usage, select on sequence public.solicitudes_verificacion_id_seq to anon, authenticated;
+
 -- Almacenamiento público de fotografías de reseñas
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values (
