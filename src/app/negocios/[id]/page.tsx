@@ -2,6 +2,7 @@ import { supabase } from '@/lib/supabase';
 import { getSupabaseServer } from '@/lib/supabaseServer';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import RespuestaComercioForm from '@/components/RespuestaComercioForm';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -75,23 +76,7 @@ export default async function NegocioPage({ params }: Props) {
         // Si es el dueño, se le renderiza un bloque de edición directa (puedes estructurar un Server Action o API Route aquí)
         <div className="mt-6 p-5 bg-indigo-50 border border-indigo-100 rounded-xl">
           <h3 className="text-sm font-bold text-indigo-900 mb-2">🛠️ Administrar respuesta de tu establecimiento:</h3>
-          <form action={async (formData: FormData) => {
-            'use server';
-            const respuesta = formData.get('respuesta') as string;
-            const client = await getSupabaseServer();
-            await client.from('negocios').update({ respuesta_dueno: respuesta }).eq('id', id);
-          }} className="space-y-2">
-            <textarea
-              name="respuesta"
-              defaultValue={negocio.respuesta_dueno || ''}
-              placeholder="Escribe tu postura o aclaración comunitaria aquí..."
-              className="w-full p-2 border rounded-lg text-sm text-gray-900 focus:ring-2 focus:ring-indigo-500"
-              rows={3}
-            />
-            <button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-4 py-2 rounded-lg transition-colors">
-              Guardar Respuesta Oficial
-            </button>
-          </form>
+          <RespuestaComercioForm id={id} respuesta={negocio.respuesta_dueno} />
         </div>
       ) : negocio.respuesta_dueno ? (
         <div className="mt-6 p-5 bg-blue-50 border border-blue-100 rounded-xl">

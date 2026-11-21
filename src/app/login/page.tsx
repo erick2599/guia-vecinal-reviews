@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import { mensajeSeguro } from '@/lib/errores';
 import Link from 'next/link';
 
 export default function LoginPage() {
@@ -17,17 +18,32 @@ export default function LoginPage() {
     setLoading(true);
     setError(null);
 
-    const { error: loginError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const { error: loginError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (loginError) {
-      setError('Credenciales inválidas. Verifica tu correo y contraseña.');
-      setLoading(false);
-    } else {
+      if (loginError) {
+        // Solo mostramos "credenciales inválidas" para ese caso concreto;
+        // cualquier otro fallo se traduce a un mensaje seguro.
+        const sonCredenciales = loginError.message
+          .toLowerCase()
+          .includes('invalid login credentials');
+        setError(
+          sonCredenciales
+            ? 'Credenciales inválidas. Verifica tu correo y contraseña.'
+            : mensajeSeguro('ingresar')
+        );
+        return;
+      }
+
       router.push('/');
       router.refresh();
+    } catch {
+      setError(mensajeSeguro('ingresar'));
+    } finally {
+      setLoading(false);
     }
   };
 

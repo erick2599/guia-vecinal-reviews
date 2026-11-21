@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import { mensajeSeguro } from '@/lib/errores';
 import { CATEGORIAS } from '@/lib/categorias';
 import Link from 'next/link';
 
@@ -97,67 +98,76 @@ export default function ReportarPage() {
     let urlPublicaImagen: string | null = null;
     let nombreArchivoSubido: string | null = null;
 
-    if (archivoFoto) {
-      const extension = archivoFoto.name.split('.').pop()?.toLowerCase() || 'jpg';
-      const nombreArchivo = `${Date.now()}-${Math.random()
-        .toString(36)
-        .slice(2, 8)}.${extension}`;
-      nombreArchivoSubido = nombreArchivo;
+    try {
+      if (archivoFoto) {
+        const extension = archivoFoto.name.split('.').pop()?.toLowerCase() || 'jpg';
+        const nombreArchivo = `${Date.now()}-${Math.random()
+          .toString(36)
+          .slice(2, 8)}.${extension}`;
+        nombreArchivoSubido = nombreArchivo;
 
-      const { error: uploadError } = await supabase.storage
-        .from('fotos-resenas')
-        .upload(nombreArchivo, archivoFoto, {
-          contentType: archivoFoto.type,
-          cacheControl: '3600',
-        });
+        const { error: uploadError } = await supabase.storage
+          .from('fotos-resenas')
+          .upload(nombreArchivo, archivoFoto, {
+            contentType: archivoFoto.type,
+            cacheControl: '3600',
+          });
 
-      if (uploadError) {
-        setError('Error al subir la imagen. Por favor, intenta de nuevo.');
-        setLoading(false);
+        if (uploadError) {
+          setError(mensajeSeguro('subir'));
+          return;
+        }
+
+        const { data: publicUrlData } = supabase.storage
+          .from('fotos-resenas')
+          .getPublicUrl(nombreArchivo);
+
+        urlPublicaImagen = publicUrlData.publicUrl;
+      }
+
+      const slug = generarSlug(nombre);
+
+      const { error: insertError } = await supabase
+        .from('negocios')
+        .insert([
+          {
+            nombre: nombre.trim(),
+            categoria,
+            slug,
+            descripcion: descripcion.trim(),
+            calificacion: Number(calificacion),
+            direccion: direccion.trim() || null,
+            imagen_prueba_url: urlPublicaImagen,
+            es_promocionado: esPromocionado,
+            horario: esPromocionado ? horario.trim() : null,
+            nombre_propietario: esPromocionado ? nombrePropietario.trim() : null,
+            telefono_contacto: esPromocionado ? telefonoContacto.trim() : null,
+            redes_sociales: esPromocionado ? redesSociales.trim() : null,
+          },
+        ]);
+
+      if (insertError) {
+        // Si el negocio no se pudo guardar, intentamos no dejar la foto huérfana.
+        if (nombreArchivoSubido) {
+          try {
+            await supabase.storage
+              .from('fotos-resenas')
+              .remove([nombreArchivoSubido]);
+          } catch {
+            // La limpieza es secundaria; no cambia el mensaje del usuario.
+          }
+        }
+        setError(mensajeSeguro('guardar'));
         return;
       }
 
-      const { data: publicUrlData } = supabase.storage
-        .from('fotos-resenas')
-        .getPublicUrl(nombreArchivo);
-
-      urlPublicaImagen = publicUrlData.publicUrl;
-    }
-
-    const slug = generarSlug(nombre);
-
-    // Guardado en la base de datos con detección de errores detallada
-    const { error: insertError } = await supabase
-      .from('negocios')
-      .insert([
-        {
-          nombre: nombre.trim(),
-          categoria,
-          slug,
-          descripcion: descripcion.trim(),
-          calificacion: Number(calificacion),
-          direccion: direccion.trim() || null,
-          imagen_prueba_url: urlPublicaImagen,
-          es_promocionado: esPromocionado,
-          horario: esPromocionado ? horario.trim() : null,
-          nombre_propietario: esPromocionado ? nombrePropietario.trim() : null,
-          telefono_contacto: esPromocionado ? telefonoContacto.trim() : null,
-          redes_sociales: esPromocionado ? redesSociales.trim() : null,
-        },
-      ]);
-
-    if (insertError) {
-      // Si el negocio no se pudo guardar, no dejamos la foto huérfana.
-      if (nombreArchivoSubido) {
-        await supabase.storage
-          .from('fotos-resenas')
-          .remove([nombreArchivoSubido]);
-      }
-      setError(`Fallo en Supabase: ${insertError.message} -> ${insertError.details || 'Revisa restricciones NOT NULL'}`);
-      setLoading(false);
-    } else {
       router.push(`/categorias/${categoria}`);
       router.refresh();
+    } catch {
+      // Caídas de red, proyectos inaccesibles o cualquier fallo inesperado.
+      setError(mensajeSeguro('guardar'));
+    } finally {
+      setLoading(false);
     }
   };
 

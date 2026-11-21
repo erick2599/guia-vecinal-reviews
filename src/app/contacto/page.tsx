@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import { mensajeSeguro } from '@/lib/errores';
 import Link from 'next/link';
 
 export default function ContactoPage() {
@@ -28,24 +29,29 @@ export default function ContactoPage() {
       return;
     }
 
-    // Operación de Escritura (INSERT) en la tabla de solicitudes
-    const { error: insertError } = await supabase
-      .from('solicitudes_verificacion')
-      .insert([
-        {
-          nombre_dueno: nombreDueno.trim(),
-          email_contacto: emailContacto.trim(),
-          nombre_negocio: nombreNegocio.trim(),
-          direccion_negocio: direccionNegocio.trim(),
-          mensaje_verificacion: mensajeVerificacion.trim(),
-        },
-      ]);
+    try {
+      // Operación de Escritura (INSERT) en la tabla de solicitudes
+      const { error: insertError } = await supabase
+        .from('solicitudes_verificacion')
+        .insert([
+          {
+            nombre_dueno: nombreDueno.trim(),
+            email_contacto: emailContacto.trim(),
+            nombre_negocio: nombreNegocio.trim(),
+            direccion_negocio: direccionNegocio.trim(),
+            mensaje_verificacion: mensajeVerificacion.trim(),
+          },
+        ]);
 
-    if (insertError) {
-      setError('Hubo un problema al enviar tu solicitud. Inténtalo de nuevo más tarde.');
-      setLoading(false);
-    } else {
+      if (insertError) {
+        setError(mensajeSeguro('guardar'));
+        return;
+      }
+
       setEnviado(true);
+    } catch {
+      setError(mensajeSeguro('guardar'));
+    } finally {
       setLoading(false);
     }
   };
